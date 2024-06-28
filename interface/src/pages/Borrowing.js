@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 
 export const Borrowing = () => {
-  const { contract, depositCollateral, borrowCORE } = useWeb3();
+  const { contract, depositCollateral, borrowBTC, account, ethers, loading } = useWeb3();
   const [collateral, setCollateral] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
   const [userCollateral, setUserCollateral] = useState(0);
@@ -37,12 +37,13 @@ export const Borrowing = () => {
   useEffect(() => {
     if (contract) {
       const fetchUserData = async () => {
-        const collateral = await contract.getUserCollateral();
+        const collateral = ethers.formatUnits((await contract.getUserCollateral(account.toString())), 18);
+        console.log('Collateral', collateral);
         setUserCollateral(collateral);
         const limit = (collateral * 0.8).toFixed(2);
         setBorrowLimit(limit);
-        const borrowed = await contract.getUserBorrowed();
-        setAvailableToBorrow((limit - borrowed).toFixed(2));
+        const borrowed = await contract.getUserBorrowed(account.toString());
+        setAvailableToBorrow(limit - (Number(borrowed)).toFixed(2));
       };
       fetchUserData();
       // Set up an interval to fetch data every 30 seconds
@@ -53,7 +54,9 @@ export const Borrowing = () => {
 
   const handleDepositCollateral = async () => {
     try {
-      await depositCollateral(collateral);
+      await depositCollateral(ethers.parseUnits(collateral.toString(), "ether"));
+      console.log('Deposit', collateral);
+      if(!loading) {
       toast({
         title: "Collateral deposited",
         description: `You have successfully deposited ${collateral} USDT as collateral`,
@@ -62,6 +65,7 @@ export const Borrowing = () => {
         isClosable: true,
       });
       setCollateral('');
+    }
     } catch (error) {
       toast({
         title: "Deposit failed",
@@ -75,15 +79,18 @@ export const Borrowing = () => {
 
   const handleBorrow = async () => {
     try {
-      await borrowCORE(loanAmount);
+      await borrowBTC(ethers.parseUnits(loanAmount.toString(), "ether"));
+      console.log(loanAmount);
+      if(!loading) {
       toast({
         title: "Borrow successful",
-        description: `You have successfully borrowed ${loanAmount} CORE`,
+        description: `You have successfully borrowed ${loanAmount} BTC`,
         status: "success",
         duration: 5000,
         isClosable: true,
       });
       setLoanAmount('');
+    }
     } catch (error) {
       toast({
         title: "Borrow failed",
@@ -124,7 +131,7 @@ export const Borrowing = () => {
             borderColor={borderColor}
           >
             <StatLabel fontSize="lg">Borrow Limit</StatLabel>
-            <StatNumber fontSize="3xl">{borrowLimit.toLocaleString()} CORE</StatNumber>
+            <StatNumber fontSize="3xl">{borrowLimit.toLocaleString()} BTC</StatNumber>
             <StatHelpText>80% of collateral</StatHelpText>
           </Stat>
 
@@ -137,7 +144,7 @@ export const Borrowing = () => {
             borderColor={borderColor}
           >
             <StatLabel fontSize="lg">Available to Borrow</StatLabel>
-            <StatNumber fontSize="3xl">{availableToBorrow.toLocaleString()} CORE</StatNumber>
+            <StatNumber fontSize="3xl">{availableToBorrow.toLocaleString()} BTC</StatNumber>
             <StatHelpText>Remaining borrow limit</StatHelpText>
           </Stat>
         </SimpleGrid>
@@ -176,18 +183,18 @@ export const Borrowing = () => {
           borderColor={borderColor}
         >
           <VStack spacing={4}>
-            <Text fontSize="xl" fontWeight="bold">Borrow CORE</Text>
+            <Text fontSize="xl" fontWeight="bold">Borrow BTC</Text>
             <InputGroup size="lg">
               <Input
                 type="number"
                 value={loanAmount}
                 onChange={(e) => setLoanAmount(e.target.value)}
-                placeholder="Amount in CORE"
+                placeholder="Amount in BTC"
               />
-              <InputRightAddon children="CORE" />
+              <InputRightAddon children="BTC" />
             </InputGroup>
             <Button colorScheme="blue" onClick={handleBorrow} width="100%">
-              Borrow CORE
+              Borrow BTC
             </Button>
           </VStack>
         </Box>

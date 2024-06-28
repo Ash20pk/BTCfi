@@ -8,13 +8,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract CoreLoanPlatform is Ownable {
     using SafeERC20 for IERC20;
 
-    IERC20 public immutable tUSDT;
-    IERC20 public immutable tCORE;
+    IERC20 public immutable USD;
+    IERC20 public immutable BTC;
 
     uint256 public constant COLLATERAL_RATIO = 150; // 150% collateralization
     uint256 public constant BORROWABLE_RATIO = 80; // 80% of collateral can be borrowed
     uint256 public constant INTEREST_RATE = 5; // 5% interest rate
     uint256 public constant LOAN_DURATION = 30 days;
+
+    uint256 private totalStaked = 0; //Counter for total staked
+    uint256 private totalBorrowed = 0; //Counter for total borrowed
 
     struct Loan {
         uint256 amount;
@@ -34,15 +37,15 @@ contract CoreLoanPlatform is Ownable {
     event CoreDeposited(address indexed lender, uint256 amount);
     event CoreWithdrawn(address indexed lender, uint256 amount);
 
-    constructor(address _tUSDT, address _tCORE) Ownable(msg.sender) {
-        require(_tUSDT != address(0) && _tCORE != address(0), "Invalid token addresses");
-        tUSDT = IERC20(_tUSDT);
-        tCORE = IERC20(_tCORE);
+    constructor(address _USD, address _BTC) Ownable(msg.sender) {
+        require(_USD != address(0) && _BTC != address(0), "Invalid token addresses");
+        USD = IERC20(_USD);
+        BTC = IERC20(_BTC);
     }
 
     function depositCollateral(uint256 amount) external  {
         require(amount > 0, "Amount must be greater than 0");
-        tUSDT.safeTransferFrom(msg.sender, address(this), amount);
+        USD.safeTransferFrom(msg.sender, address(this), amount);
         userCollateral[msg.sender] += amount;
         emit CollateralDeposited(msg.sender, amount);
     }
@@ -56,7 +59,7 @@ contract CoreLoanPlatform is Ownable {
         require(userCollateral[msg.sender] - amount >= requiredCollateral, "Withdrawal would undercollateralize loan");
 
         userCollateral[msg.sender] -= amount;
-        tUSDT.safeTransfer(msg.sender, amount);
+        USD.safeTransfer(msg.sender, amount);
         emit CollateralWithdrawn(msg.sender, amount);
     }
 
@@ -70,10 +73,12 @@ contract CoreLoanPlatform is Ownable {
         uint256 maxBorrowable = (userCollateral[msg.sender] * BORROWABLE_RATIO) / 100;
         require(amount <= maxBorrowable, "Borrow amount exceeds limit");
 
-        require(tCORE.balanceOf(address(this)) >= amount, "Insufficient tCORE in contract");
+        require(BTC.balanceOf(address(this)) >= amount, "Insufficient BTC in contract");
 
         loans[msg.sender] = Loan(amount, requiredCollateral, block.timestamp, true);
-        tCORE.safeTransfer(msg.sender, amount);
+        BTC.safeTransfer(msg.sender, amount);
+
+        totalBorrowed = totalBorrowed + amount;
 
         emit LoanTaken(msg.sender, amount, requiredCollateral);
     }
@@ -85,17 +90,20 @@ contract CoreLoanPlatform is Ownable {
         uint256 interest = (loan.amount * INTEREST_RATE * (block.timestamp - loan.timestamp)) / (100 * 365 days);
         uint256 totalRepayment = loan.amount + interest;
 
-        tCORE.safeTransferFrom(msg.sender, address(this), totalRepayment);
+        BTC.safeTransferFrom(msg.sender, address(this), totalRepayment);
 
         loan.active = false;
+
+        totalBorrowed = totalBorrowed - loan.amount;
 
         emit LoanRepaid(msg.sender, loan.amount, interest);
     }
 
     function depositCORE(uint256 amount) external  {
         require(amount > 0, "Amount must be greater than 0");
-        tCORE.safeTransferFrom(msg.sender, address(this), amount);
+        BTC.safeTransferFrom(msg.sender, address(this), amount);
         lenderBalances[msg.sender] += amount;
+        totalStaked = totalStaked + amount;
         emit CoreDeposited(msg.sender, amount);
     }
 
@@ -103,7 +111,8 @@ contract CoreLoanPlatform is Ownable {
         require(amount > 0, "Amount must be greater than 0");
         require(lenderBalances[msg.sender] >= amount, "Insufficient balance");
         lenderBalances[msg.sender] -= amount;
-        tCORE.safeTransfer(msg.sender, amount);
+        totalStaked = totalStaked - amount;
+        BTC.safeTransfer(msg.sender, amount);
         emit CoreWithdrawn(msg.sender, amount);
     }
 
@@ -120,11 +129,11 @@ contract CoreLoanPlatform is Ownable {
     }
 
     function getTotalStaked() external view returns (uint256) {
-        return tUSDT.balanceOf(address(this));
+        return totalStaked;
     }
 
     function getTotalBorrowed() external view returns (uint256) {
-        return tCORE.totalSupply() - tCORE.balanceOf(address(this));
+        return totalBorrowed;
     }
 
     function getCurrentApy() external pure returns (uint256) {
@@ -140,6 +149,6 @@ contract CoreLoanPlatform is Ownable {
     }
 
     function getUserStaked(address user) external view returns (uint256) {
-        return userCollateral[user];
+        return lenderBalances[user];
     }
 }

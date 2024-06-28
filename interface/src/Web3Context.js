@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import LoanPlatformABI from './ABI/CoreLoanPlatform.json';
-import IERC20ABI from './ABI/IERC20.json';
+import BitcoinABI from './ABI/Bitcoin.json';
+import USDABI from './ABI/Bitcoin.json';
 
 const Web3Context = createContext();
 
@@ -16,12 +17,13 @@ export const Web3Provider = ({ children }) => {
   const [signer, setSigner] = useState(null);
   const [contract, setContract] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [tUSDT, settUSDT] = useState(null);
-  const [tCORE, settCORE] = useState(null);
+  const [tUSDT, setUSDT] = useState(null);
+  const [tBTC, setBTC] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
-  const usdtAddress = "0x3786495f5d8a83b7bacd78e2a0c61ca20722cce3";
-  const coreAddress = "0x6B0e7A1C756564bB0A0d12008BB6b964C836Cbc3";
+  const contractAddress = process.env.REACT_APP_DAPP_ADDRESS;
+  const usdtAddress = process.env.REACT_APP_USD_ADDRESS;
+  const BTCAddress = process.env.REACT_APP_BTC_ADDRESS;
 
   useEffect(() => {
     if (window.ethereum) {
@@ -36,10 +38,10 @@ export const Web3Provider = ({ children }) => {
       const signerInstance = await provider.getSigner();
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
       const instance = new ethers.Contract(contractAddress, LoanPlatformABI.abi, signerInstance);
-      const usdtInstance = new ethers.Contract(usdtAddress, IERC20ABI.abi, signerInstance);
-      const coreInstance = new ethers.Contract(coreAddress, IERC20ABI.abi, signerInstance);
-      settUSDT(usdtInstance);
-      settCORE(coreInstance);
+      const usdtInstance = new ethers.Contract(usdtAddress, USDABI.abi, signerInstance);
+      const BTCInstance = new ethers.Contract(BTCAddress, BitcoinABI.abi, signerInstance);
+      setUSDT(usdtInstance);
+      setBTC(BTCInstance);
       setSigner(signerInstance);
       setContract(instance);
       setAccount(accounts[0]);
@@ -56,47 +58,74 @@ export const Web3Provider = ({ children }) => {
 
   const depositCollateral = async (amount) => {
     try {
+      setLoading(true);
       await tUSDT.approve(contractAddress, ethers.parseUnits(amount.toString(), 6));
-      await contract.depositCollateral(ethers.parseUnits(amount.toString(), 6));
+      const tx = await contract.depositCollateral(ethers.parseUnits(amount.toString(), 6));
+      await tx.wait()
+      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      setLoading(false);
+
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   };
 
-  const borrowCORE = async (amount) => {
+  const borrowBTC = async (amount) => {
     try {
-      await contract.borrowCORE(ethers.parseUnits(amount, 6));
+      setLoading(true);
+      const tx = await contract.borrowBTC(ethers.parseUnits(amount, 6));
+      await tx.wait()
+      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      setLoading(false);
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   };
 
   const repayLoan = async () => {
     try {
-      await contract.repayLoan();
+      setLoading(true);
+      const tx = await contract.repayLoan();
+      await tx.wait()
+      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      setLoading(false);
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   };
 
-  const depositCORE = async (amount) => {
+  const depositBTC = async (amount) => {
     try {
-      await contract.depositCORE(ethers.parseUnits(amount, 6));
+      setLoading(true);
+      await tBTC.approve(contractAddress, ethers.parseUnits(amount.toString(), 6))
+      const tx = await contract.depositBTC(ethers.parseUnits(amount, 6));
+      await tx.wait()
+      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      setLoading(false);
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   };
 
-  const withdrawCORE = async (amount) => {
+  const withdrawBTC = async (amount) => {
     try {
-      await contract.withdrawCORE(ethers.parseUnits(amount, 6));
+      setLoading(true);
+      const tx = await contract.withdrawBTC(ethers.parseUnits(amount, 6));
+      await tx.wait()
+      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      setLoading(false);
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   };
 
   return (
-    <Web3Context.Provider value={{ account, isConnected, connectToMetaMask, disconnectFromMetaMask, contract, depositCollateral, borrowCORE, repayLoan, depositCORE, withdrawCORE }}>
+    <Web3Context.Provider value={{ ethers, account, isConnected, connectToMetaMask, disconnectFromMetaMask, loading, contract, depositCollateral, borrowBTC, repayLoan, depositBTC, withdrawBTC, tBTC, tUSDT }}>
       {children}
     </Web3Context.Provider>
   );

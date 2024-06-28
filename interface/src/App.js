@@ -17,15 +17,52 @@ import {
   HStack,
   useColorModeValue,
   IconButton,
-  useColorMode
+  useColorMode,
+  Tooltip,
+  useToast,
 } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
+import { FaFaucet } from 'react-icons/fa';
 
 const App = () => {
-  const { isConnected, account, connectToMetaMask, disconnectFromMetaMask } = useWeb3();
+  const { isConnected, account, connectToMetaMask, disconnectFromMetaMask, tBTC, tUSDT, ethers} = useWeb3();
   const { colorMode, toggleColorMode } = useColorMode();
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const textColor = useColorModeValue('gray.800', 'gray.100');
+  const toast = useToast();
+
+  const handleFaucet = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Not connected",
+        description: "Please connect your wallet first.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      await tBTC.mint(account.toString(), ethers.parseUnits("10", "ether"))
+      await tUSDT.mint(account.toString(), ethers.parseUnits("100", "ether"))
+      toast({
+        title: "Faucet successful",
+        description: "You have received 100 USD and 10 BTC.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Faucet failed",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   return (
     <ChakraProvider>
@@ -37,6 +74,14 @@ const App = () => {
                 BTCfi
               </Heading>
               <HStack>
+                <Tooltip label="Get test tokens">
+                  <IconButton
+                    icon={<FaFaucet />}
+                    onClick={handleFaucet}
+                    aria-label="Faucet"
+                    colorScheme="teal"
+                  />
+                </Tooltip>
                 <IconButton
                   icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
                   onClick={toggleColorMode}

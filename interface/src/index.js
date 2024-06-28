@@ -9,13 +9,13 @@ import './index.css'; // Import global styles
 
 ReactDOM.render(
   <React.StrictMode>
-    <ChakraProvider>
-      <Web3Provider>
+    <Web3Provider>
+      <ChakraProvider>
         <Router>
           <App />
         </Router>
-      </Web3Provider>
-    </ChakraProvider>
+      </ChakraProvider>
+    </Web3Provider>
   </React.StrictMode>,
   document.getElementById('root')
 );

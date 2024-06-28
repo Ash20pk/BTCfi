@@ -20,7 +20,7 @@ import {
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 
 export const Home = () => {
-  const { contract } = useWeb3();
+  const { contract, ethers } = useWeb3();
   const [totalStaked, setTotalStaked] = useState(0);
   const [totalBorrowed, setTotalBorrowed] = useState(0);
   const [stakedChange, setStakedChange] = useState(0);
@@ -33,11 +33,11 @@ export const Home = () => {
     if (contract) {
       const fetchTotals = async () => {
         try {
-          const newTotalStaked = await contract.getTotalStaked();
-          const newTotalBorrowed = await contract.getTotalBorrowed();
+          const newTotalStaked = ethers.formatUnits(await contract.getTotalStaked(), 6);
+          const newTotalBorrowed = ethers.formatUnits(await contract.getTotalBorrowed(), 6);
 
-          setStakedChange(((newTotalStaked - totalStaked) / totalStaked) * 100);
-          setBorrowedChange(((newTotalBorrowed - totalBorrowed) / totalBorrowed) * 100);
+          setStakedChange(((newTotalStaked - totalStaked) / totalStaked).toFixed(2) * 100);
+          setBorrowedChange(((newTotalBorrowed - totalBorrowed) / totalBorrowed).toFixed(2) * 100);
           
           setTotalStaked(newTotalStaked);
           setTotalBorrowed(newTotalBorrowed);

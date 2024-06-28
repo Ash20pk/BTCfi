@@ -22,7 +22,7 @@ import {
 } from '@chakra-ui/react';
 
 export const Lending = () => {
-  const { depositCORE, withdrawCORE, contract, account } = useWeb3();
+  const { depositBTC, withdrawBTC, contract, account, ethers } = useWeb3();
   const [amount, setAmount] = useState('');
   const [userStaked, setUserStaked] = useState(0);
   const [apy, setApy] = useState(0);
@@ -34,11 +34,11 @@ export const Lending = () => {
   useEffect(() => {
     if (contract && account) {
       const fetchUserData = async () => {
-        const staked = await contract.getUserStaked(account);
-        setUserStaked(staked);
+        const staked = await contract.getUserStaked(account.toString());
+        setUserStaked(ethers.formatUnits(staked, 18));
         // Assuming there's a method to get APY from the contract
         const currentApy = await contract.getCurrentApy();
-        setApy(currentApy);
+        setApy(Number(currentApy.toString()));
       };
       fetchUserData();
       // Set up an interval to fetch data every 30 seconds
@@ -49,10 +49,10 @@ export const Lending = () => {
 
   const handleDeposit = async () => {
     try {
-      await depositCORE(amount);
+      await depositBTC(ethers.parseUnits(amount.toString(), "ether"));
       toast({
         title: "Deposit successful",
-        description: `You have successfully staked ${amount} CORE`,
+        description: `You have successfully staked ${amount} BTC`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -71,10 +71,10 @@ export const Lending = () => {
 
   const handleWithdraw = async () => {
     try {
-      await withdrawCORE(amount);
+      await withdrawBTC(ethers.parseUnits(amount.toString(), "ether"));
       toast({
         title: "Withdrawal successful",
-        description: `You have successfully withdrawn ${amount} CORE`,
+        description: `You have successfully withdrawn ${amount} BTC`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -104,8 +104,8 @@ export const Lending = () => {
             border="1px"
             borderColor={borderColor}
           >
-            <StatLabel fontSize="lg">Your Staked CORE</StatLabel>
-            <StatNumber fontSize="3xl">{userStaked.toLocaleString()} CORE</StatNumber>
+            <StatLabel fontSize="lg">Your Staked BTC</StatLabel>
+            <StatNumber fontSize="3xl">{userStaked.toLocaleString()} BTC</StatNumber>
             <StatHelpText>Available for withdrawal</StatHelpText>
           </Stat>
           
@@ -133,16 +133,16 @@ export const Lending = () => {
         >
           <VStack spacing={4}>
             <Text fontSize="xl" fontWeight="bold">
-              Stake or Withdraw CORE
+              Stake or Withdraw BTC
             </Text>
             <InputGroup size="lg">
               <Input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Amount in CORE"
+                placeholder="Amount in BTC"
               />
-              <InputRightAddon children="CORE" />
+              <InputRightAddon children="BTC" />
             </InputGroup>
             <HStack width="100%">
               <Button colorScheme="blue" onClick={handleDeposit} flex={1}>
