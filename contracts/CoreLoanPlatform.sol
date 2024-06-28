@@ -34,8 +34,8 @@ contract CoreLoanPlatform is Ownable {
     event LoanRepaid(address indexed borrower, uint256 amount, uint256 interest);
     event CollateralDeposited(address indexed user, uint256 amount);
     event CollateralWithdrawn(address indexed user, uint256 amount);
-    event CoreDeposited(address indexed lender, uint256 amount);
-    event CoreWithdrawn(address indexed lender, uint256 amount);
+    event BTCDeposited(address indexed lender, uint256 amount);
+    event BTCWithdrawn(address indexed lender, uint256 amount);
 
     constructor(address _USD, address _BTC) Ownable(msg.sender) {
         require(_USD != address(0) && _BTC != address(0), "Invalid token addresses");
@@ -63,7 +63,7 @@ contract CoreLoanPlatform is Ownable {
         emit CollateralWithdrawn(msg.sender, amount);
     }
 
-    function borrowCORE(uint256 amount) external  {
+    function borrowBTC(uint256 amount) external  {
         require(amount > 0, "Amount must be greater than 0");
         require(!loans[msg.sender].active, "Existing loan must be repaid first");
 
@@ -99,21 +99,21 @@ contract CoreLoanPlatform is Ownable {
         emit LoanRepaid(msg.sender, loan.amount, interest);
     }
 
-    function depositCORE(uint256 amount) external  {
+    function depositBTC(uint256 amount) external  {
         require(amount > 0, "Amount must be greater than 0");
         BTC.safeTransferFrom(msg.sender, address(this), amount);
         lenderBalances[msg.sender] += amount;
         totalStaked = totalStaked + amount;
-        emit CoreDeposited(msg.sender, amount);
+        emit BTCDeposited(msg.sender, amount);
     }
 
-    function withdrawCORE(uint256 amount) external  {
+    function withdrawBTC(uint256 amount) external  {
         require(amount > 0, "Amount must be greater than 0");
         require(lenderBalances[msg.sender] >= amount, "Insufficient balance");
         lenderBalances[msg.sender] -= amount;
         totalStaked = totalStaked - amount;
         BTC.safeTransfer(msg.sender, amount);
-        emit CoreWithdrawn(msg.sender, amount);
+        emit BTCWithdrawn(msg.sender, amount);
     }
 
     function getBorrowableAmount(address user) external view returns (uint256) {

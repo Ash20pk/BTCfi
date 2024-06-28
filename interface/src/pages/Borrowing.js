@@ -37,7 +37,7 @@ export const Borrowing = () => {
   useEffect(() => {
     if (contract) {
       const fetchUserData = async () => {
-        const collateral = ethers.formatUnits((await contract.getUserCollateral(account.toString())), 18);
+        const collateral = ethers.formatUnits((await contract.getUserCollateral(account.toString()), 18));
         console.log('Collateral', collateral);
         setUserCollateral(collateral);
         const limit = (collateral * 0.8).toFixed(2);
@@ -54,7 +54,7 @@ export const Borrowing = () => {
 
   const handleDepositCollateral = async () => {
     try {
-      await depositCollateral(ethers.parseUnits(collateral.toString(), "ether"));
+      await depositCollateral(collateral);
       console.log('Deposit', collateral);
       if(!loading) {
       toast({
@@ -79,7 +79,7 @@ export const Borrowing = () => {
 
   const handleBorrow = async () => {
     try {
-      await borrowBTC(ethers.parseUnits(loanAmount.toString(), "ether"));
+      await borrowBTC(loanAmount);
       console.log(loanAmount);
       if(!loading) {
       toast({

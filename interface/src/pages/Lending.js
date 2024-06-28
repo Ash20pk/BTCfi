@@ -49,7 +49,7 @@ export const Lending = () => {
 
   const handleDeposit = async () => {
     try {
-      await depositBTC(ethers.parseUnits(amount.toString(), "ether"));
+      await depositBTC(amount);
       toast({
         title: "Deposit successful",
         description: `You have successfully staked ${amount} BTC`,
@@ -71,7 +71,7 @@ export const Lending = () => {
 
   const handleWithdraw = async () => {
     try {
-      await withdrawBTC(ethers.parseUnits(amount.toString(), "ether"));
+      await withdrawBTC(amount);
       toast({
         title: "Withdrawal successful",
         description: `You have successfully withdrawn ${amount} BTC`,

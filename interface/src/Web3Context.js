@@ -59,8 +59,8 @@ export const Web3Provider = ({ children }) => {
   const depositCollateral = async (amount) => {
     try {
       setLoading(true);
-      await tUSDT.approve(contractAddress, ethers.parseUnits(amount.toString(), 6));
-      const tx = await contract.depositCollateral(ethers.parseUnits(amount.toString(), 6));
+      await tUSDT.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"));
+      const tx = await contract.depositCollateral(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
       console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
@@ -74,7 +74,7 @@ export const Web3Provider = ({ children }) => {
   const borrowBTC = async (amount) => {
     try {
       setLoading(true);
-      const tx = await contract.borrowBTC(ethers.parseUnits(amount, 6));
+      const tx = await contract.borrowBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
       console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
@@ -100,8 +100,8 @@ export const Web3Provider = ({ children }) => {
   const depositBTC = async (amount) => {
     try {
       setLoading(true);
-      await tBTC.approve(contractAddress, ethers.parseUnits(amount.toString(), 6))
-      const tx = await contract.depositBTC(ethers.parseUnits(amount, 6));
+      await tBTC.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"))
+      const tx = await contract.depositBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
       console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
@@ -114,7 +114,7 @@ export const Web3Provider = ({ children }) => {
   const withdrawBTC = async (amount) => {
     try {
       setLoading(true);
-      const tx = await contract.withdrawBTC(ethers.parseUnits(amount, 6));
+      const tx = await contract.withdrawBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
       console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
