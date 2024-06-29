@@ -90,7 +90,7 @@ export const Home = () => {
             borderColor={borderColor}
           >
             <StatLabel fontSize="lg">Total Borrowed</StatLabel>
-            <StatNumber fontSize="3xl">{totalBorrowed.toLocaleString()} ETH</StatNumber>
+            <StatNumber fontSize="3xl">{totalBorrowed.toLocaleString()} BTC</StatNumber>
             <StatHelpText>
               <StatArrow type={borrowedChange >= 0 ? 'increase' : 'decrease'} />
               {Math.abs(borrowedChange).toFixed(2)}%
