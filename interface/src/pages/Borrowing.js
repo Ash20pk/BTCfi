@@ -50,7 +50,7 @@ export const Borrowing = () => {
       const loan = await contract.getLoanDetails(account)
       console.log('Loan', loan);
       setLoanDetails(loan);
-      const { amount, timestamp } = loanDetails;
+      const { amount, timestamp } = loan;
       const currentTime = Math.floor(Date.now() / 1000); // current time in seconds
       const timeElapsed = currentTime - Number(timestamp.toString());
       console.log('Time Elapsed', currentTime, Number(timestamp.toString()));
