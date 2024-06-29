@@ -33,8 +33,8 @@ export const Home = () => {
     if (contract) {
       const fetchTotals = async () => {
         try {
-          const newTotalStaked = ethers.formatUnits(await contract.getTotalStaked(), 6);
-          const newTotalBorrowed = ethers.formatUnits(await contract.getTotalBorrowed(), 6);
+          const newTotalStaked = ethers.formatUnits(await contract.getTotalStaked(), 18);
+          const newTotalBorrowed = ethers.formatUnits(await contract.getTotalBorrowed(), 18);
 
           setStakedChange(((newTotalStaked - totalStaked) / totalStaked).toFixed(2) * 100);
           setBorrowedChange(((newTotalBorrowed - totalBorrowed) / totalBorrowed).toFixed(2) * 100);
@@ -74,7 +74,7 @@ export const Home = () => {
             borderColor={borderColor}
           >
             <StatLabel fontSize="lg">Total Staked</StatLabel>
-            <StatNumber fontSize="3xl">{totalStaked.toLocaleString()} ETH</StatNumber>
+            <StatNumber fontSize="3xl">{totalStaked.toLocaleString()} BTC</StatNumber>
             <StatHelpText>
               <StatArrow type={stakedChange >= 0 ? 'increase' : 'decrease'} />
               {Math.abs(stakedChange).toFixed(2)}%
