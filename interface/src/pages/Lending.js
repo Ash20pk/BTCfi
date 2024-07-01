@@ -22,7 +22,7 @@ import {
 } from '@chakra-ui/react';
 
 export const Lending = () => {
-  const { depositBTC, withdrawBTC, contract, account, ethers } = useWeb3();
+  const { depositBTC, withdrawBTC, contract, account, ethers, loading, Error } = useWeb3();
   const [amount, setAmount] = useState('');
   const [userStaked, setUserStaked] = useState(0);
   const [apy, setApy] = useState(0);
@@ -50,6 +50,7 @@ export const Lending = () => {
   const handleDeposit = async () => {
     try {
       await depositBTC(amount);
+      if (!loading && !Error) {
       toast({
         title: "Deposit successful",
         description: `You have successfully staked ${amount} BTC`,
@@ -58,6 +59,7 @@ export const Lending = () => {
         isClosable: true,
       });
       setAmount('');
+    }
     } catch (error) {
       toast({
         title: "Deposit failed",
@@ -72,7 +74,8 @@ export const Lending = () => {
   const handleWithdraw = async () => {
     try {
       await withdrawBTC(amount);
-      toast({
+      if (!loading && !Error) {
+        toast({
         title: "Withdrawal successful",
         description: `You have successfully withdrawn ${amount} BTC`,
         status: "success",
@@ -80,6 +83,7 @@ export const Lending = () => {
         isClosable: true,
       });
       setAmount('');
+    }
     } catch (error) {
       toast({
         title: "Withdrawal failed",

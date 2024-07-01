@@ -15,6 +15,7 @@ contract CoreLoanPlatform is Ownable {
     uint256 public constant BORROWABLE_RATIO = 80; // 80% of collateral can be borrowed
     uint256 public constant INTEREST_RATE = 5; // 5% interest rate
     uint256 public constant LOAN_DURATION = 30 days;
+    uint256 private constant SECONDS_IN_A_DAY = 86400;
 
     uint256 private totalStaked = 0; //Counter for total staked
     uint256 private totalBorrowed = 0; //Counter for total borrowed
@@ -83,17 +84,19 @@ contract CoreLoanPlatform is Ownable {
         emit LoanTaken(msg.sender, amount, requiredCollateral);
     }
 
-    function repayLoan() external  {
-        Loan storage loan = loans[msg.sender];
+    function repayLoan(address user) external  {
+        Loan storage loan = loans[user];
         require(loan.active, "No active loan");
         
-        uint256 interest = (loan.amount * INTEREST_RATE * (block.timestamp - loan.timestamp)) / (100 * 365 days);
+        uint256 daysElapsed = (block.timestamp - loan.timestamp) / SECONDS_IN_A_DAY;
+        require(daysElapsed <= 30, "Loan duration exceeded 30 days");
+
+        uint256 interest = (loan.amount * INTEREST_RATE * daysElapsed) / 36500; 
         uint256 totalRepayment = loan.amount + interest;
 
-        BTC.safeTransferFrom(msg.sender, address(this), totalRepayment);
+        BTC.safeTransferFrom(user, address(this), totalRepayment);
 
         loan.active = false;
-
         totalBorrowed = totalBorrowed - loan.amount;
 
         emit LoanRepaid(msg.sender, loan.amount, interest);
@@ -114,6 +117,15 @@ contract CoreLoanPlatform is Ownable {
         totalStaked = totalStaked - amount;
         BTC.safeTransfer(msg.sender, amount);
         emit BTCWithdrawn(msg.sender, amount);
+    }
+
+    function calculateInterest(address user) external view returns (uint256) {
+        Loan storage loan = loans[user];
+        if (loan.active) {
+        uint256 daysElapsed = (block.timestamp - loan.timestamp) / SECONDS_IN_A_DAY;
+        uint256 interest = (loan.amount * INTEREST_RATE * daysElapsed) / 36500; 
+        return interest;
+        }
     }
 
     function getBorrowableAmount(address user) external view returns (uint256) {
@@ -145,7 +157,12 @@ contract CoreLoanPlatform is Ownable {
     }
 
     function getUserBorrowed(address user) external view returns (uint256) {
+        if (loans[user].active) {
         return loans[user].amount;
+        }
+        else {
+            return 0;
+        }
     }
 
     function getUserStaked(address user) external view returns (uint256) {

@@ -20,7 +20,7 @@ import {
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 
 export const Home = () => {
-  const { contract, ethers } = useWeb3();
+  const { contract, ethers, Error } = useWeb3();
   const [totalStaked, setTotalStaked] = useState(0);
   const [totalBorrowed, setTotalBorrowed] = useState(0);
   const [stakedChange, setStakedChange] = useState(0);

@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 
 export const Borrowing = () => {
-  const { contract, depositCollateral, borrowBTC, repayLoan, account, ethers, loading } = useWeb3();
+  const { contract, depositCollateral, borrowBTC, repayLoan, account, ethers, loading, Error } = useWeb3();
   const [collateral, setCollateral] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
   const [userCollateral, setUserCollateral] = useState(0);
@@ -31,12 +31,10 @@ export const Borrowing = () => {
   const [borrowLimit, setBorrowLimit] = useState(0);
   const [borrowedAmount, setBorrowedAmount] = useState(0);
   const [interestAmount, setInterestAmount] = useState(0);
-  const [loanDetails, setLoanDetails] = useState(null);
   const toast = useToast();
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const SECONDS_IN_A_YEAR = 365 * 24 * 60 * 60;
 
   const fetchUserData = async () => {
     if (contract && account) {
@@ -46,17 +44,11 @@ export const Borrowing = () => {
       const limit = (Number(collateral) * 0.8).toFixed(2);
       setBorrowLimit(limit);
       const borrowed = ethers.formatUnits((await contract.getUserBorrowed(account)).toString(), 18);
+      console.log(borrowed);
       setBorrowedAmount(Number(borrowed).toFixed(2));
-      const loan = await contract.getLoanDetails(account)
-      console.log('Loan', loan);
-      setLoanDetails(loan);
-      const { amount, timestamp } = loan;
-      const currentTime = Math.floor(Date.now() / 1000); // current time in seconds
-      const timeElapsed = currentTime - Number(timestamp.toString());
-      console.log('Time Elapsed', currentTime, Number(timestamp.toString()));
-      const interest = await contract.getCurrentApy();
-      const interestAmount = (ethers.formatUnits((amount.toString(), 18)) * Number(interest.toString()) * timeElapsed) / (100 * SECONDS_IN_A_YEAR);
-      setInterestAmount(Number(interestAmount).toFixed(6));
+      const interest = await contract.calculateInterest(account.toString());
+      console.log('Interest', ethers.formatUnits(interest.toString(), 18));
+      setInterestAmount(ethers.formatUnits(interest.toString(), 18));
       setAvailableToBorrow((limit - Number(borrowed)).toFixed(2));
     }
   };
@@ -71,7 +63,7 @@ export const Borrowing = () => {
     try {
       await depositCollateral(collateral);
       console.log('Deposit', collateral);
-      if (!loading) {
+      if (!loading && !Error) {
         toast({
           title: "Collateral deposited",
           description: `You have successfully deposited ${collateral} USDT as collateral`,
@@ -97,7 +89,7 @@ export const Borrowing = () => {
     try {
       await borrowBTC(loanAmount);
       console.log(loanAmount);
-      if (!loading) {
+      if (!loading && !Error) {
         toast({
           title: "Borrow successful",
           description: `You have successfully borrowed ${loanAmount} BTC`,
@@ -121,8 +113,8 @@ export const Borrowing = () => {
 
   const handleRepay = async () => {
     try {
-      await repayLoan();
-      if (!loading) {
+      await repayLoan(account.toString(), Number(interestAmount) + Number(borrowedAmount));
+      if (!loading && !Error) {
         toast({
           title: "Repayment successful",
           description: `You have successfully repaid ${borrowedAmount} BTC`,

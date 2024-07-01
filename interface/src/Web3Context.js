@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import LoanPlatformABI from './ABI/CoreLoanPlatform.json';
 import BitcoinABI from './ABI/Bitcoin.json';
 import USDABI from './ABI/Bitcoin.json';
+import {useToast} from '@chakra-ui/react';
 
 const Web3Context = createContext();
 
@@ -20,6 +21,8 @@ export const Web3Provider = ({ children }) => {
   const [tUSDT, setUSDT] = useState(null);
   const [tBTC, setBTC] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [Error, setError] = useState(false);
+  const toast = useToast();
 
   const contractAddress = process.env.REACT_APP_DAPP_ADDRESS;
   const usdtAddress = process.env.REACT_APP_USD_ADDRESS;
@@ -34,6 +37,7 @@ export const Web3Provider = ({ children }) => {
 
   const connectToMetaMask = async () => {
     try {
+      setError(false);
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const signerInstance = await provider.getSigner();
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -48,6 +52,14 @@ export const Web3Provider = ({ children }) => {
       setIsConnected(true);
     } catch (error) {
       console.error(error);
+      setError(true);
+      toast({
+        title: "Connecting to Metamask failed",
+        description: error.reason,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -58,6 +70,7 @@ export const Web3Provider = ({ children }) => {
 
   const depositCollateral = async (amount) => {
     try {
+      setError(false);
       setLoading(true);
       await tUSDT.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"));
       const tx = await contract.depositCollateral(ethers.parseUnits(amount.toString(), "ether"));
@@ -68,11 +81,20 @@ export const Web3Provider = ({ children }) => {
     } catch (error) {
       console.error(error);
       setLoading(false);
+      setError(true);
+      toast({
+        title: "Depositing collateral failed",
+        description: error.reason,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const borrowBTC = async (amount) => {
     try {
+      setError(false);
       setLoading(true);
       const tx = await contract.borrowBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
@@ -81,24 +103,43 @@ export const Web3Provider = ({ children }) => {
     } catch (error) {
       console.error(error);
       setLoading(false);
+      setError(true);
+      toast({
+        title: "Borrowing BTC failed",
+        description: error.reason,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
-  const repayLoan = async () => {
+  const repayLoan = async (user, amount) => {
     try {
+      setError(false);
       setLoading(true);
-      const tx = await contract.repayLoan();
+      await tBTC.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"))
+      const tx = await contract.repayLoan(user);
       await tx.wait()
       console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
     } catch (error) {
       console.error(error);
       setLoading(false);
+      setError(true);
+      toast({
+        title: "Repaying loan failed",
+        description: error.reason,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const depositBTC = async (amount) => {
     try {
+      setError(false);
       setLoading(true);
       await tBTC.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"))
       const tx = await contract.depositBTC(ethers.parseUnits(amount.toString(), "ether"));
@@ -108,11 +149,20 @@ export const Web3Provider = ({ children }) => {
     } catch (error) {
       console.error(error);
       setLoading(false);
+      setError(true);
+      toast({
+        title: "Depositing BTC failed",
+        description: error.reason,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const withdrawBTC = async (amount) => {
     try {
+      setError(false);
       setLoading(true);
       const tx = await contract.withdrawBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
@@ -121,11 +171,19 @@ export const Web3Provider = ({ children }) => {
     } catch (error) {
       console.error(error);
       setLoading(false);
+      setError(true);
+      toast({
+        title: "Withdrawing BTC failed",
+        description: error.reason,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   return (
-    <Web3Context.Provider value={{ ethers, account, isConnected, connectToMetaMask, disconnectFromMetaMask, loading, contract, depositCollateral, borrowBTC, repayLoan, depositBTC, withdrawBTC, tBTC, tUSDT }}>
+    <Web3Context.Provider value={{ ethers, account, isConnected, connectToMetaMask, disconnectFromMetaMask, loading, contract, depositCollateral, borrowBTC, repayLoan, depositBTC, withdrawBTC, tBTC, tUSDT, Error}}>
       {children}
     </Web3Context.Provider>
   );
