@@ -41,6 +41,10 @@ export const Web3Provider = ({ children }) => {
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const signerInstance = await provider.getSigner();
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      const chainID = await window.ethereum.request({ method: 'eth_chainId' });
+      if (chainID != "0x45b") {
+        alert('Please Connect to Core Testnet')
+      }
       const instance = new ethers.Contract(contractAddress, LoanPlatformABI.abi, signerInstance);
       const usdtInstance = new ethers.Contract(usdtAddress, USDABI.abi, signerInstance);
       const BTCInstance = new ethers.Contract(BTCAddress, BitcoinABI.abi, signerInstance);
@@ -75,7 +79,7 @@ export const Web3Provider = ({ children }) => {
       await tUSDT.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"));
       const tx = await contract.depositCollateral(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
-      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      console.log(`Deposit Collateral: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
 
     } catch (error) {
@@ -92,13 +96,36 @@ export const Web3Provider = ({ children }) => {
     }
   };
 
+  const withdrawCollateral = async (amount) => {
+    try {
+      setError(false);
+      setLoading(true);
+      const tx = await contract.withdrawCollateral(ethers.parseUnits(amount.toString(), "ether"));
+      await tx.wait()
+      console.log(`Withdraw Collateral: https://scan.test.btcs.network/tx/${tx.hash}`);
+      setLoading(false);
+
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+      setError(true);
+      toast({
+        title: "Withdrawing collateral failed",
+        description: error.reason,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   const borrowBTC = async (amount) => {
     try {
       setError(false);
       setLoading(true);
       const tx = await contract.borrowBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
-      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      console.log(`Borrowed BTC: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -121,7 +148,7 @@ export const Web3Provider = ({ children }) => {
       await tBTC.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"))
       const tx = await contract.repayLoan(user);
       await tx.wait()
-      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      console.log(`Loan Repayed: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -144,7 +171,7 @@ export const Web3Provider = ({ children }) => {
       await tBTC.approve(contractAddress, ethers.parseUnits(amount.toString(), "ether"))
       const tx = await contract.depositBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
-      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      console.log(`Deposited BTC: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -166,7 +193,7 @@ export const Web3Provider = ({ children }) => {
       setLoading(true);
       const tx = await contract.withdrawBTC(ethers.parseUnits(amount.toString(), "ether"));
       await tx.wait()
-      console.log(`Added: https://scan.test.btcs.network/tx/${tx.hash}`);
+      console.log(`Withdraw BTC: https://scan.test.btcs.network/tx/${tx.hash}`);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -183,7 +210,7 @@ export const Web3Provider = ({ children }) => {
   };
 
   return (
-    <Web3Context.Provider value={{ ethers, account, isConnected, connectToMetaMask, disconnectFromMetaMask, loading, contract, depositCollateral, borrowBTC, repayLoan, depositBTC, withdrawBTC, tBTC, tUSDT, Error}}>
+    <Web3Context.Provider value={{ ethers, account, isConnected, connectToMetaMask, disconnectFromMetaMask, loading, contract, depositCollateral, withdrawCollateral, borrowBTC, repayLoan, depositBTC, withdrawBTC, tBTC, tUSDT, Error}}>
       {children}
     </Web3Context.Provider>
   );

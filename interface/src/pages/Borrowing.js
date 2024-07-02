@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 
 export const Borrowing = () => {
-  const { contract, depositCollateral, borrowBTC, repayLoan, account, ethers, loading, Error } = useWeb3();
+  const { contract, depositCollateral, withdrawCollateral, borrowBTC, repayLoan, account, ethers, loading, Error } = useWeb3();
   const [collateral, setCollateral] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
   const [userCollateral, setUserCollateral] = useState(0);
@@ -77,6 +77,32 @@ export const Borrowing = () => {
     } catch (error) {
       toast({
         title: "Deposit failed",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleWithdrawCollateral = async () => {
+    try {
+      await withdrawCollateral(collateral);
+      console.log('Withdrew', collateral);
+      if (!loading && !Error) {
+        toast({
+          title: "Collateral withdrew",
+          description: `You have successfully Withdrew ${collateral} USDT as collateral`,
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+        setCollateral('');
+        fetchUserData();
+      }
+    } catch (error) {
+      toast({
+        title: "Withdrew failed",
         description: error.message,
         status: "error",
         duration: 5000,
@@ -193,8 +219,36 @@ export const Borrowing = () => {
           border="1px"
           borderColor={borderColor}
         >
+          <VStack spacing={4} align="stretch">
+            <Text fontSize="xl" fontWeight="bold">Your Borrowed Amount</Text>
+            <HStack justify="space-between">
+              <VStack align="start">
+                <Text>Borrowed: {borrowedAmount} BTC</Text>
+                <Text>Interest: {interestAmount} BTC</Text>
+                <Text fontWeight="bold">Total to Repay: {(Number(borrowedAmount) + Number(interestAmount)).toFixed(2)} BTC</Text>
+              </VStack>
+              <Button colorScheme="red" onClick={handleRepay}>
+                Repay Loan
+              </Button>
+            </HStack>
+            <Text mb={2}>Borrow Utilization</Text>
+            <Progress value={borrowPercentage} colorScheme="blue" height="32px" borderRadius="md" />
+            <Text textAlign="right">{borrowPercentage}%</Text>
+          </VStack>
+        </Box>
+
+        <Box
+          bg={bgColor}
+          borderRadius="lg"
+          boxShadow="md"
+          p={6}
+          border="1px"
+          borderColor={borderColor}
+        >
           <VStack spacing={4}>
-            <Text fontSize="xl" fontWeight="bold">Deposit Collateral</Text>
+            <Text fontSize="xl" fontWeight="bold">
+              Stake or Withdraw Collateral
+            </Text>
             <InputGroup size="lg">
               <Input
                 type="number"
@@ -204,9 +258,14 @@ export const Borrowing = () => {
               />
               <InputRightAddon children="USDT" />
             </InputGroup>
-            <Button colorScheme="green" onClick={handleDepositCollateral} width="100%">
-              Deposit Collateral
-            </Button>
+            <HStack width="100%">
+              <Button colorScheme="blue" onClick={handleDepositCollateral} flex={1}>
+                Stake
+              </Button>
+              <Button colorScheme="red" onClick={handleWithdrawCollateral} flex={1}>
+                Withdraw
+              </Button>
+            </HStack>
           </VStack>
         </Box>
 
@@ -232,32 +291,6 @@ export const Borrowing = () => {
             <Button colorScheme="blue" onClick={handleBorrow} width="100%">
               Borrow BTC
             </Button>
-          </VStack>
-        </Box>
-
-        <Box
-          bg={bgColor}
-          borderRadius="lg"
-          boxShadow="md"
-          p={6}
-          border="1px"
-          borderColor={borderColor}
-        >
-          <VStack spacing={4} align="stretch">
-            <Text fontSize="xl" fontWeight="bold">Your Borrowed Amount</Text>
-            <HStack justify="space-between">
-              <VStack align="start">
-                <Text>Borrowed: {borrowedAmount} BTC</Text>
-                <Text>Interest: {interestAmount} BTC</Text>
-                <Text fontWeight="bold">Total to Repay: {(Number(borrowedAmount) + Number(interestAmount)).toFixed(2)} BTC</Text>
-              </VStack>
-              <Button colorScheme="red" onClick={handleRepay}>
-                Repay Loan
-              </Button>
-            </HStack>
-            <Text mb={2}>Borrow Utilization</Text>
-            <Progress value={borrowPercentage} colorScheme="blue" height="32px" borderRadius="md" />
-            <Text textAlign="right">{borrowPercentage}%</Text>
           </VStack>
         </Box>
       </VStack>
